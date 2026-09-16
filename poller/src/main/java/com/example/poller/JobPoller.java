@@ -93,7 +93,7 @@ public class JobPoller implements CommandLineRunner {
                 Thread.sleep(pollIntervalMs);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                log.info("Scheduler is down...");
+                log.info("Poller is down...");
                 break;
             }
         }

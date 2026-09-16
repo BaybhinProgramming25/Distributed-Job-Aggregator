@@ -22,7 +22,7 @@ public class RabbitConfig {
     }
 
     // Global converter: the job.queue listener now receives JSON batches from
-    // the scheduler; INFERRED deserializes into the listener's declared type
+    // the poller; INFERRED deserializes into the listener's declared type
     // instead of trusting the sender's __TypeId__ header.
     @Bean
     public JacksonJsonMessageConverter messageConverter() {

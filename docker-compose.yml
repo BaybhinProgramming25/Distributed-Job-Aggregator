@@ -86,8 +86,8 @@ services:
         limits:
           memory: 64m
 
-  scheduler:
-    build: ./scheduler
+  poller:
+    build: ./poller
     restart: unless-stopped
     oom_score_adj: 200
     environment:

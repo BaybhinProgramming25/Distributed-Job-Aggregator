@@ -4,37 +4,13 @@ A distributed job-feed aggregator that polls **11 applicant-tracking systems** (
 
 ## Architecture
 
-```
-   11 ATS platforms (Greenhouse, Workday, Lever, ...)
-                 │  polls every POLL_MINUTES (default 30)
-                 ▼
-          ┌─────────────┐   job.queue    ┌─────────────┐
-          │  scheduler  │───────────────►│  RabbitMQ   │
-          └─────────────┘                └──────┬──────┘
-                                                │ competing consumers
-                                                ▼
-                                         ┌─────────────┐
-                    idempotent upserts   │   worker    │
-              ┌──────────────────────────│ (3 replicas)│
-              ▼                          └──────┬──────┘
-       ┌─────────────┐                          │ fresh jobs only → new-jobs
-       │ CockroachDB │                          ▼
-       └──────┬──────┘                   ┌─────────────┐
-              │ reads                    │   backend   │──► STOMP WebSocket
-              └─────────────────────────►│ (REST + WS) │    /user/queue/jobs
-                                         └──────┬──────┘
-                                                ▲
-                 HTTPS (automatic TLS)          │ /api/*, /ws
-   Browser ────────────────────────────► ┌─────────────┐
-              React dashboard  ◄──────── │    Caddy    │
-                                         └─────────────┘
-```
+![Architecture diagram](docs/architecture.jpg)
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Services | Spring Boot (`backend`, `scheduler`, `worker`) |
+| Services | Spring Boot (`backend`, `poller`, `worker`) |
 | Messaging | RabbitMQ (competing consumers via Spring AMQP) |
 | Database | CockroachDB (Postgres wire-compatible), Spring JDBC |
 | Live updates | STOMP over WebSockets (per-user queues via `SimpMessagingTemplate`) |
@@ -51,6 +27,5 @@ A distributed job-feed aggregator that polls **11 applicant-tracking systems** (
 | `POST /api/subscribe` | Update which ATS platforms the user watches |
 
 
-## Visit
+## Next Steps
 
-You can signup at [SWEJobFeed](https://csjobrunner.org) and see the various postings!
