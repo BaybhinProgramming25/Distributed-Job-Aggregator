@@ -2,8 +2,6 @@ package com.example.controller;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
-
-import com.example.dto.SubscribeRequest;
 import com.example.service.SubscribeService;
 
 @RestController 
@@ -16,7 +14,7 @@ public class SubscribeController {
     }
 
     @PostMapping("/api/subscribe")
-    public void subscribe(@RequestBody SubscribeRequest request, Authentication authentication) {
-        subscribeService.subscribeToCompanies(authentication.getName(), request.companies());
+    public void subscribe(Authentication authentication) {
+        subscribeService.subscribeToCompanies(authentication.getName());
     }
 }

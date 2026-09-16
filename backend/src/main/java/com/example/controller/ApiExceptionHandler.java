@@ -10,7 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * Ensures a thrown {@link ResponseStatusException} reaches the browser as JSON
  * with its {@code reason} in a "message" field, so the UI can show actionable
- * errors (e.g. "set ANTHROPIC_API_KEY") instead of a bare status code.
+ * errors (e.g. "username or email already taken") instead of a bare status code.
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {

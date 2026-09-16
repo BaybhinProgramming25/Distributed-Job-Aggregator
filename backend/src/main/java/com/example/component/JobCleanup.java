@@ -18,9 +18,6 @@ public class JobCleanup {
         this.jdbc = jdbc;
     }
 
-    // Runs 30s after startup, then hourly. Ages jobs out by firstSeen: since
-    // ingestion already rejects postings older than 3 days, this keeps the
-    // dashboard a rolling window (worst case ~6 days after the posted date).
     @Scheduled(initialDelay = 30_000, fixedDelay = 3_600_000)
     public void deleteExpiredJobs() {
 

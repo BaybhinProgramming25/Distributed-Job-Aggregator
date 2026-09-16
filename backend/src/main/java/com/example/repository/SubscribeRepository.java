@@ -27,8 +27,6 @@ public class SubscribeRepository {
 
     public void saveUserCompanies(Long id, List<String> companies) {
 
-        jdbc.update("DELETE FROM dist_jobs_scheduler.watched_companies WHERE user_id = ?", id);
-
         jdbc.batchUpdate("INSERT INTO dist_jobs_scheduler.watched_companies (user_id, company_name) VALUES (?, ?)", companies, companies.size(), (ps, company) -> {
             ps.setLong(1, id);
             ps.setString(2, company);

@@ -20,11 +20,13 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const res = await api.post('/api/users/signup', { username, email, password, phoneNumber });
+      const res = await api.post('/api/users/signup', {
+        username, email, password, phoneNumber,
+      });
       saveAuth(res.data.token, res.data.username);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed — that username or email may already be taken');
+      setError(err.response?.data?.message || 'Signup failed — please check your details and try again');
     } finally {
       setLoading(false);
     }

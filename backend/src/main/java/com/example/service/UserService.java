@@ -20,8 +20,7 @@ public class UserService {
     private final JwtService jwtService;
     private final SubscribeService subscribeService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       JwtService jwtService, SubscribeService subscribeService) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, SubscribeService subscribeService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -29,38 +28,42 @@ public class UserService {
     }
 
     public SignupResponse signup(SignupRequest request) {
-
-        if (
-            request.username() == null || request.username().isBlank() ||
-            request.email() == null || request.email().isBlank() || 
-            request.password() == null || request.password().length() < 8 || 
-            request.phoneNumber() == null || request.phoneNumber().isBlank()
-        ) {
+        
+        // Make sure every field is NOT empty or
+        if (request.username() == null || request.username().isBlank() || request.email() == null || request.email().isBlank() || request.password() == null || request.password().length() < 8 || request.phoneNumber() == null || request.phoneNumber().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "username, email, phone number required. password must be at least 8 characters.");
         }
 
+        // Make sure this is a fresh user 
         if (userRepository.existsByUsernameOrEmail(request.username(), request.email())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "username or email already taken.");
         }
 
+        // Hash password
         String hash = passwordEncoder.encode(request.password());
+        
+        // Save User to Database
         User saved = userRepository.save(request.username(), request.email(), hash, request.phoneNumber());
 
-        // Auto-subscribe new accounts to every ATS so the feed is populated.
-        subscribeService.subscribeToDefaults(saved.username());
-
+        // Users are automatically subscribed to ALL ATS
+        subscribeService.subscribeToCompanies(saved.username());
+        
+        // JWT token for the user 
         String token = jwtService.generateToken(saved.username());
         return new SignupResponse(saved.id(), saved.username(), saved.email(), token);
     }
 
     public LoginResponse login(LoginRequest request) {
 
+        // Search for user 
         User user = userRepository.findByUsername(request.username()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid username or password"));
 
+        // Provided wrong password or username (don't specify which one)
         if (!passwordEncoder.matches(request.password(), user.passwordHashed())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid username or password");
         }
 
+        // Renew token
         String token = jwtService.generateToken(user.username());
         return new LoginResponse(token, user.username());
     }

@@ -4,13 +4,9 @@ import { Client } from '@stomp/stompjs';
 
 import api from '../../api';
 import { getToken, getUsername, clearAuth } from '../../auth';
-import ResumePanel from './ResumePanel';
-import Tracker from './Tracker';
 import './Dashboard.css';
 
 const jobKey = (job) => job.url || `${job.company}|${job.title}`;
-// A tracked application keys the same way, so the feed knows what's already tracked.
-const appKey = (a) => a.url || `${a.company}|${a.title}`;
 
 // `posted` comes straight from each ATS and the format varies: ISO strings
 // (greenhouse/ashby), epoch millis/seconds (lever), relative text like
@@ -122,66 +118,13 @@ const Dashboard = () => {
   const [filterLevel, setFilterLevel] = useState('');        // '' = all levels
   const [filterCountry, setFilterCountry] = useState('');    // '' = all locations
   const [sortBy, setSortBy] = useState('found');    // 'found' | 'posted', newest first
-  const [resume, setResume] = useState(null);
-  const [resumeOpen, setResumeOpen] = useState(false);
-  const [tailoring, setTailoring] = useState(null); // { job, status, result?, error? }
-  const [view, setView] = useState('feed');          // 'feed' | 'tracker'
-  const [apps, setApps] = useState([]);              // tracked applications (source of truth)
-
-  // Reload the tracked applications; the feed's "Tracked" state derives from these.
-  const reloadApps = () =>
-    api.get('/api/applications')
-      .then((res) => setApps(res.data || []))
-      .catch(() => {});
 
   // Initial snapshot over REST
   useEffect(() => {
     api.get('/api/dashboard')
       .then((res) => setJobs(res.data))
       .catch(() => {});
-
-    // A 204 (no resume yet) resolves with empty data — leave resume null.
-    api.get('/api/resume')
-      .then((res) => setResume(res.data || null))
-      .catch(() => {});
-
-    reloadApps();
   }, []);
-
-  // The set of job keys already in the tracker — kept in sync with `apps`.
-  const trackedKeys = useMemo(() => new Set(apps.map(appKey)), [apps]);
-
-  const jobBody = (job) => ({
-    company: job.company, ats: job.ats, title: job.title,
-    location: job.location, department: job.department, url: job.url,
-  });
-
-  // Phase 1: score + requirement gap analysis. No rewrite yet.
-  const handleTailor = (job) => {
-    setResumeOpen(true);
-    if (!resume) {
-      setTailoring(null);
-      return; // panel shows the import form
-    }
-    setTailoring({ job, status: 'analyzing' });
-    api.post('/api/resume/analyze', jobBody(job))
-      .then((res) => setTailoring({ job, status: 'analyzed', analysis: res.data }))
-      .catch((err) => setTailoring({
-        job, status: 'error',
-        error: err?.response?.data?.message || 'Failed to analyze your resume',
-      }));
-  };
-
-  // Phase 2: user opted in — generate the tailored one-page resume.
-  const handleGenerate = (job, analysis) => {
-    setTailoring({ job, analysis, status: 'generating' });
-    api.post('/api/resume/tailor', jobBody(job))
-      .then((res) => setTailoring({ job, analysis, status: 'done', result: res.data }))
-      .catch((err) => setTailoring({
-        job, analysis, status: 'error',
-        error: err?.response?.data?.message || 'Failed to tailor your resume',
-      }));
-  };
 
   // Live updates over STOMP/WebSocket
   useEffect(() => {
@@ -233,16 +176,6 @@ const Dashboard = () => {
     return [...filtered].sort((a, b) => key(b) - key(a));
   }, [jobs, filterAts, filterLevel, filterCountry, sortBy]);
 
-  // Add a feed job to the application tracker (status "applied").
-  const handleTrack = (job) => {
-    api.post('/api/applications', {
-      company: job.company, title: job.title, location: job.location,
-      url: job.url, ats: job.ats, status: 'applied',
-    })
-      .then(reloadApps)
-      .catch(() => {});
-  };
-
   const handleLogout = () => {
     clearAuth();
     navigate('/login');
@@ -255,21 +188,6 @@ const Dashboard = () => {
           <p className='sidebar-tagline'>
             US software-engineering roles from across the web, updated live as they’re posted.
           </p>
-
-          <nav className='sidebar-nav'>
-            <button
-              className={view === 'feed' ? 'sidebar-nav-item sidebar-nav-item--active' : 'sidebar-nav-item'}
-              onClick={() => setView('feed')}
-            >
-              Job Feed
-            </button>
-            <button
-              className={view === 'tracker' ? 'sidebar-nav-item sidebar-nav-item--active' : 'sidebar-nav-item'}
-              onClick={() => setView('tracker')}
-            >
-              My Applications
-            </button>
-          </nav>
         </div>
 
         <div className='dashboard-sidebar-bottom'>
@@ -283,27 +201,15 @@ const Dashboard = () => {
 
       <div className='dashboard-feed'>
         <header className='feed-header'>
-          <h1 className='feed-title'>{view === 'tracker' ? 'My Applications' : 'Job Feed'}</h1>
+          <h1 className='feed-title'>Job Feed</h1>
           <div className='feed-header-right'>
-            <button
-              className={resumeOpen ? 'resume-toggle resume-toggle--active' : 'resume-toggle'}
-              onClick={() => setResumeOpen((v) => !v)}
-            >
-              {resume ? 'Resume' : 'Add resume'}
-            </button>
-            {view === 'feed' && (
-              <span className={connected ? 'feed-status feed-status--live' : 'feed-status'}>
-                <span className='feed-status-dot' />
-                {connected ? 'Live' : 'Connecting...'}
-              </span>
-            )}
+            <span className={connected ? 'feed-status feed-status--live' : 'feed-status'}>
+              <span className='feed-status-dot' />
+              {connected ? 'Live' : 'Connecting...'}
+            </span>
           </div>
         </header>
 
-        {view === 'tracker' && <Tracker apps={apps} reload={reloadApps} />}
-
-        {view === 'feed' && (
-        <>
         <div className='feed-toolbar'>
           {atsOptions.length > 0 && (
             <div className='feed-filters'>
@@ -387,23 +293,6 @@ const Dashboard = () => {
                   </p>
                 </div>
                 <div className='job-card-side'>
-                  <div className='job-card-btns'>
-                    <button
-                      className='job-tailor-btn'
-                      onClick={() => handleTailor(job)}
-                      title='Score and tailor your resume to this job'
-                    >
-                      Tailor
-                    </button>
-                    <button
-                      className={trackedKeys.has(jobKey(job)) ? 'job-track-btn job-track-btn--done' : 'job-track-btn'}
-                      onClick={() => handleTrack(job)}
-                      disabled={trackedKeys.has(jobKey(job))}
-                      title='Add to your application tracker'
-                    >
-                      {trackedKeys.has(jobKey(job)) ? 'Tracked ✓' : 'Track'}
-                    </button>
-                  </div>
                   <div className='job-badges'>
                     {job.live && <span className='job-new-badge'>NEW</span>}
                     {job.ats && <span className='job-ats-badge'>{job.ats}</span>}
@@ -421,19 +310,7 @@ const Dashboard = () => {
             ))}
           </ul>
         )}
-        </>
-        )}
       </div>
-
-      {resumeOpen && (
-        <ResumePanel
-          resume={resume}
-          onSaved={setResume}
-          tailoring={tailoring}
-          onGenerate={handleGenerate}
-          onClose={() => setResumeOpen(false)}
-        />
-      )}
     </div>
   );
 };

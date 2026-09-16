@@ -50,6 +50,7 @@ public class UserRepository {
         return count != null && count > 0;
     }
 
+
     private User mapRow(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
 
         return new User(
