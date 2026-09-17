@@ -65,5 +65,5 @@ docker compose up -d --build
 
 ## Next Steps
 
+- Add more ATS sources 
 - Migrate application to AWS
-- Turn CockroachDB to using a multi-node approach
