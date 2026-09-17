@@ -7,7 +7,7 @@ const PublicLayout = ({ children }) => {
       <header className="public-nav">
         <Link to="/" className="public-nav-logo">
           <span className="public-nav-logo-icon">SWE</span>
-          <span className="public-nav-logo-text">SWE Job Feed</span>
+          <span className="public-nav-logo-text">Distributed Job Aggregator</span>
         </Link>
         <nav className="public-nav-links">
           <Link to="/login">Log in</Link>
