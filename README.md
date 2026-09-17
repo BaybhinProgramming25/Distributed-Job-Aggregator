@@ -29,3 +29,5 @@ A distributed job-feed aggregator that polls **11 applicant-tracking systems** (
 
 ## Next Steps
 
+- Migrate application to AWS
+- Turn CockroachDB to using a multi-node approach
