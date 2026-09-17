@@ -19,15 +19,15 @@ const Home = () => {
       <section className="home-features">
         <div className="home-feature-card">
           <h2>Distributed Scraping</h2>
-          <p>A scheduler fans polling work out to a fleet of workers over RabbitMQ, covering multiple job boards in parallel.</p>
+          <p>The poller looks for jobs every 30 minutes and pushes them to a queue for worker nodes to process.</p>
         </div>
         <div className="home-feature-card">
           <h2>Live Dashboard</h2>
-          <p>New postings are pushed to your browser over WebSockets the instant they are discovered — no refreshing.</p>
+          <p>Any new jobs processed and stored by the workers are pushed onto your dashboard through WebSockets.</p>
         </div>
         <div className="home-feature-card">
-          <h2>Company Subscriptions</h2>
-          <p>Pick exactly which companies you want to watch. Your feed only ever shows openings from your own list.</p>
+          <h2>Click and Apply</h2>
+          <p>New postings are laid out as cards — click one and it takes you straight to the application.</p>
         </div>
       </section>
     </div>
